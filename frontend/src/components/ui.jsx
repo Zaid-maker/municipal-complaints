@@ -62,8 +62,7 @@ export function TextField({ id, label, error, hint, ...props }) {
   );
 }
 
-export function SelectField({ id, label, error, children, ...props }) {
-  return (
+export function SelectField({ id, label, error, children, ...props }) {  return (
     <div>
       <label htmlFor={id} className="text-sm font-medium text-slate-700">
         {label}
@@ -108,6 +107,54 @@ export function RoleBadge({ role }) {
   return (
     <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${styles[role] ?? styles.citizen}`}>
       {role}
+    </span>
+  );
+}
+
+export function TextArea({ id, label, error, hint, rows = 5, ...props }) {
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+
+  return (
+    <div>
+      <label htmlFor={id} className="text-sm font-medium text-slate-700">
+        {label}
+      </label>
+
+      <textarea
+        {...props}
+        id={id}
+        rows={rows}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+        className={`${inputClasses} resize-y`}
+      />
+
+      {error ? (
+        <p id={`${id}-error`} className="mt-1.5 text-xs text-red-600">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={`${id}-hint`} className="mt-1.5 text-xs text-slate-500">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function StatusBadge({ status, label }) {
+  const styles = {
+    submitted: "bg-slate-100 text-slate-700",
+    acknowledged: "bg-sky-100 text-sky-800",
+    "in-progress": "bg-amber-100 text-amber-800",
+    resolved: "bg-emerald-100 text-emerald-800",
+    closed: "bg-slate-200 text-slate-700",
+    rejected: "bg-red-100 text-red-700"
+  };
+
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[status] ?? styles.submitted}`}>
+      {label ?? status}
     </span>
   );
 }

@@ -1,10 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { apiRequest } from "../lib/api";
+import { AuthContext } from "./auth-context.js";
 
 const TOKEN_KEY = "municipal.token";
-
-const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
@@ -26,10 +25,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!token) {
-      setStatus("anonymous");
-      return;
-    }
+    if (!token) return;
 
     let cancelled = false;
 
@@ -77,20 +73,24 @@ export function AuthProvider({ children }) {
     [acceptSession]
   );
 
+  const register = useCallback(
+    async (values) => {
+      const payload = await apiRequest("/api/auth/register", {
+        method: "POST",
+        body: values
+      });
+
+      acceptSession(payload.data);
+
+      return payload.data.user;
+    },
+    [acceptSession]
+  );
+
   const value = useMemo(
-    () => ({ token, user, status, signIn, signOut, bootstrap }),
-    [token, user, status, signIn, signOut, bootstrap]
+    () => ({ token, user, status, signIn, signOut, bootstrap, register }),
+    [token, user, status, signIn, signOut, bootstrap, register]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
-
-  return context;
 }

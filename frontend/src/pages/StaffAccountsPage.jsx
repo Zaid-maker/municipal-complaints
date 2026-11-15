@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { apiRequest, fieldError } from "../lib/api";
-import { useAuth } from "../context/AuthContext";
+import { formatDate } from "../lib/format";
+import { useAuth } from "../context/useAuth";
 import {
   Alert,
   Button,
@@ -17,8 +18,11 @@ export default function StaffAccountsPage() {
   const { user, token, signOut } = useAuth();
 
   const [accounts, setAccounts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [requestKey, setRequestKey] = useState(0);
+  const [loadedKey, setLoadedKey] = useState(-1);
+
+  const loading = loadedKey !== requestKey;
 
   const [values, setValues] = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -26,29 +30,38 @@ export default function StaffAccountsPage() {
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const loadAccounts = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-
-    try {
-      const payload = await apiRequest("/api/admin/accounts", { token });
-
-      setAccounts(payload.data.accounts);
-    } catch (error) {
-      if (error.status === 401) {
-        signOut();
-        return;
-      }
-
-      setLoadError(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, signOut]);
-
   useEffect(() => {
-    loadAccounts();
-  }, [loadAccounts]);
+    let cancelled = false;
+
+    apiRequest("/api/admin/accounts", { token })
+      .then((payload) => {
+        if (cancelled) return;
+
+        setAccounts(payload.data.accounts);
+        setLoadError(null);
+        setLoadedKey(requestKey);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        if (error.status === 401) {
+          signOut();
+          return;
+        }
+
+        setLoadError(error);
+        setLoadedKey(requestKey);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestKey, token, signOut]);
+
+  const refresh = useCallback(() => {
+    setLoadError(null);
+    setRequestKey((current) => current + 1);
+  }, []);
 
   function update(name, value) {
     setValues((current) => ({ ...current, [name]: value }));
@@ -138,7 +151,7 @@ export default function StaffAccountsPage() {
               </p>
             </div>
 
-            <Button variant="secondary" onClick={loadAccounts} disabled={loading}>
+            <Button variant="secondary" onClick={refresh} disabled={loading}>
               Refresh
             </Button>
           </div>
@@ -252,14 +265,4 @@ export default function StaffAccountsPage() {
       </main>
     </div>
   );
-}
-
-function formatDate(value) {
-  if (!value) return "—";
-
-  return new Date(value).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
 }

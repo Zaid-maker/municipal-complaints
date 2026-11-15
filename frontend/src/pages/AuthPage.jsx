@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { apiRequest, fieldError } from "../lib/api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { Alert, Button, Card, TextField } from "../components/ui";
 
 export default function AuthPage() {
@@ -38,14 +38,19 @@ export default function AuthPage() {
         </div>
 
         <Card className="p-6 sm:p-8">
-          {mode === "login" ? (
+          {mode === "login" && (
             <LoginForm
               setupAvailable={setupAvailable}
               onSetup={() => setMode("setup")}
+              onRegister={() => setMode("register")}
             />
-          ) : (
-            <SetupForm onCancel={() => setMode("login")} />
           )}
+
+          {mode === "register" && (
+            <RegisterForm onCancel={() => setMode("login")} />
+          )}
+
+          {mode === "setup" && <SetupForm onCancel={() => setMode("login")} />}
         </Card>
 
         <p className="mt-6 text-center text-xs text-slate-500">
@@ -56,7 +61,7 @@ export default function AuthPage() {
   );
 }
 
-function LoginForm({ setupAvailable, onSetup }) {
+function LoginForm({ setupAvailable, onSetup, onRegister }) {
   const { signIn } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -117,9 +122,20 @@ function LoginForm({ setupAvailable, onSetup }) {
         {submitting ? "Signing in…" : "Sign in"}
       </Button>
 
+      <p className="border-t border-slate-200 pt-4 text-center text-sm text-slate-600">
+        New here?{" "}
+        <button
+          type="button"
+          onClick={onRegister}
+          className="font-semibold text-slate-900 underline underline-offset-2 hover:text-slate-700"
+        >
+          Create a citizen account
+        </button>
+      </p>
+
       {setupAvailable && (
-        <p className="border-t border-slate-200 pt-4 text-center text-sm text-slate-600">
-          First time here?{" "}
+        <p className="text-center text-sm text-slate-600">
+          Setting up the system?{" "}
           <button
             type="button"
             onClick={onSetup}
@@ -242,6 +258,103 @@ function SetupForm({ onCancel }) {
       <div className="flex gap-3">
         <Button type="submit" busy={submitting} className="flex-1">
           {submitting ? "Creating…" : "Create administrator"}
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function RegisterForm({ onCancel }) {
+  const { register } = useAuth();
+
+  const [values, setValues] = useState({ name: "", email: "", password: "" });
+  const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+
+  function update(name, value) {
+    setValues((current) => ({ ...current, [name]: value }));
+    setFieldErrors((current) => ({ ...current, [name]: undefined }));
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    setError(null);
+    setFieldErrors({});
+    setSubmitting(true);
+
+    try {
+      await register({
+        name: values.name.trim(),
+        email: values.email.trim(),
+        password: values.password
+      });
+    } catch (requestError) {
+      setError(requestError);
+      setFieldErrors({
+        name: fieldError(requestError, "name"),
+        email: fieldError(requestError, "email"),
+        password: fieldError(requestError, "password")
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900">Create a citizen account</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Report issues in your area and follow their progress.
+        </p>
+      </div>
+
+      {error && <Alert>{error.message}</Alert>}
+
+      <TextField
+        id="register-name"
+        label="Full name"
+        name="name"
+        autoComplete="name"
+        value={values.name}
+        onChange={(event) => update("name", event.target.value)}
+        error={fieldErrors.name}
+        required
+      />
+
+      <TextField
+        id="register-email"
+        label="Email"
+        type="email"
+        name="email"
+        autoComplete="email"
+        value={values.email}
+        onChange={(event) => update("email", event.target.value)}
+        error={fieldErrors.email}
+        required
+      />
+
+      <TextField
+        id="register-password"
+        label="Password"
+        type="password"
+        name="password"
+        autoComplete="new-password"
+        value={values.password}
+        onChange={(event) => update("password", event.target.value)}
+        error={fieldErrors.password}
+        hint="At least 8 characters."
+        required
+      />
+
+      <div className="flex gap-3">
+        <Button type="submit" busy={submitting} className="flex-1">
+          {submitting ? "Creating…" : "Create account"}
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel

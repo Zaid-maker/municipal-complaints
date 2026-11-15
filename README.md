@@ -30,8 +30,8 @@ domain itself has not been implemented yet.
 | Admin staff account provisioning | Implemented (create and list) |
 | Staff console UI (sign in, initial setup, provisioning) | Implemented |
 | Complaint model, submission and browsing | Implemented |
+| Citizen UI (register, report, nearby, my reports, track) | Implemented |
 | Status workflow, assignment, comments | **Not started** |
-| Citizen-facing UI | **Not started** |
 | Automated tests | **None** |
 
 See [Known issues](#known-issues) for the current limitations.
@@ -78,9 +78,15 @@ See [Known issues](#known-issues) for the current limitations.
     ├── vite.config.js            # Dev server + /api proxy to the backend
     └── src/
         ├── lib/api.js            # Fetch wrapper and ApiError
-        ├── context/              # AuthProvider (token, session, sign in/out)
+        ├── lib/format.js         # Date and relative-time helpers
+        ├── context/              # AuthProvider, AuthContext, useAuth
         ├── components/ui.jsx     # Card, Button, fields, alerts, badges
-        ├── pages/AuthPage.jsx    # Sign in and first-admin setup
+        ├── components/ComplaintCard.jsx
+        ├── pages/AuthPage.jsx    # Sign in, citizen registration, first-admin setup
+        ├── pages/CitizenApp.jsx  # Citizen portal shell and tabs
+        ├── pages/ReportComplaintPage.jsx
+        ├── pages/ComplaintsFeedPage.jsx
+        ├── pages/TrackComplaintPage.jsx
         ├── pages/StaffAccountsPage.jsx
         └── App.jsx               # Session and role routing
 ```
@@ -198,7 +204,8 @@ The project is alpha, so this list is expected to shrink quickly.
   assignment, comments or attachments yet.
 - Account provisioning is deliberately minimal: no editing, deactivation,
   password reset, search or pagination yet.
-- There is no complaint UI and no citizen-facing interface.
+- Citizens can browse and track complaints, but officers have no complaint queue
+  or dashboard yet.
 - There is no automated test suite and no CI.
 
 ---
@@ -209,7 +216,7 @@ Near-term work, roughly in order:
 
 1. Status workflow: officer assignment and status transitions with notes and a
    visible history trail.
-2. Citizen UI: submit a complaint, browse by area, track by reference.
+2. Officer and admin complaint dashboards.
 3. Attachments (photos) and notifications.
 4. Tests, CI, and a deployment path.
 
