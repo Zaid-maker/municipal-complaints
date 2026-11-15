@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
+import mongoose from "mongoose";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 
@@ -11,6 +12,13 @@ import adminRoutes from "./src/routes/adminRoutes.js";
 import connectDB from "./src/config/db.js";
 
 dotenv.config();
+
+const DATABASE_STATES = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting"
+};
 
 const app = express();
 
@@ -26,13 +34,6 @@ app.use(cors({
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
-
-if (process.env.NODE_ENV === "development") {
-    app.use(morgan("dev"));
-}
-
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 100,
@@ -40,14 +41,27 @@ const apiLimiter = rateLimit({
     legacyHeaders: false
 });
 
+// Registered before the routers so every /api request is throttled.
 app.use("/api", apiLimiter);
+
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+
+if (process.env.NODE_ENV === "development") {
+    app.use(morgan("dev"));
+}
 
 // Health check
 app.get("/api/health", (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Municipal Complaint Management API is running",
-        database: "Connected"
+    const database = DATABASE_STATES[mongoose.connection.readyState] || "unknown";
+    const healthy = mongoose.connection.readyState === 1;
+
+    res.status(healthy ? 200 : 503).json({
+        success: healthy,
+        message: healthy
+            ? "Municipal Complaint Management API is running"
+            : "Municipal Complaint Management API is running, but the database is unavailable",
+        database
     });
 });
 

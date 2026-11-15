@@ -133,7 +133,7 @@ All responses follow the shape `{ success, message?, data?, errors? }`.
 
 | Method | Path | Access | Purpose |
 | --- | --- | --- | --- |
-| `GET` | `/api/health` | Public | Health check |
+| `GET` | `/api/health` | Public | Health check; `503` when the database is down |
 | `POST` | `/api/auth/register` | Public | Citizen self-registration |
 | `POST` | `/api/auth/login` | Public | Obtain a JWT |
 | `GET` | `/api/auth/me` | Authenticated | Current user profile |
@@ -153,10 +153,6 @@ The project is alpha, so this list is expected to shrink quickly.
 
 - The frontend is a single placeholder component with no API client, routing, or
   auth screens.
-- The global `/api` rate limiter is registered after the routers, so it only
-  applies to routes defined below it; `admin` endpoints are not throttled.
-- `GET /api/health` reports `"database": "Connected"` as a static string rather
-  than an actual connection check.
 - There is no automated test suite and no CI.
 
 ---
