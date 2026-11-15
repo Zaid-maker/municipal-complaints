@@ -8,6 +8,7 @@ import rateLimit from "express-rate-limit";
 
 import authRoutes from "./src/routes/authRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
+import complaintRoutes from "./src/routes/complaintRoutes.js";
 
 import { corsOptions } from "./src/config/cors.js";
 import connectDB from "./src/config/db.js";
@@ -44,6 +45,7 @@ app.use("/api", apiLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/complaints", complaintRoutes);
 
 if (process.env.NODE_ENV === "development") {
     app.use(morgan("dev"));

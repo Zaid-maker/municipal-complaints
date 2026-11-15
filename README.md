@@ -29,7 +29,8 @@ domain itself has not been implemented yet.
 | One-time initial admin bootstrap | Implemented |
 | Admin staff account provisioning | Implemented (create and list) |
 | Staff console UI (sign in, initial setup, provisioning) | Implemented |
-| Complaint model, submission, tracking, status workflow | **Not started** |
+| Complaint model, submission and browsing | Implemented |
+| Status workflow, assignment, comments | **Not started** |
 | Citizen-facing UI | **Not started** |
 | Automated tests | **None** |
 
@@ -67,9 +68,10 @@ See [Known issues](#known-issues) for the current limitations.
 │   ├── .env.example              # Required environment variables
 │   └── src/
 │       ├── config/db.js          # Mongoose connection
-│       ├── models/               # User, Bootstrap
-│       ├── controllers/          # auth, admin
-│       ├── routes/               # auth, admin
+│       ├── config/complaint.js   # Categories, statuses, priorities (edit here)
+│       ├── models/               # User, Bootstrap, Complaint, Counter
+│       ├── controllers/          # auth, admin, complaints
+│       ├── routes/               # auth, admin, complaints
 │       ├── middleware/           # protect, authorize
 │       └── validators/           # Zod schemas
 └── frontend/
@@ -154,6 +156,10 @@ All responses follow the shape `{ success, message?, data?, errors? }`.
 | `POST` | `/api/auth/bootstrap-admin` | Public + bootstrap key | Create the first admin once |
 | `GET` | `/api/admin/accounts` | Admin | List officer/admin accounts |
 | `POST` | `/api/admin/accounts` | Admin | Create an officer/admin account |
+| `GET` | `/api/complaints/meta` | Public | Categories, statuses and priorities |
+| `GET` | `/api/complaints` | Authenticated | Browse complaints, filter by area |
+| `POST` | `/api/complaints` | Authenticated | Submit a complaint |
+| `GET` | `/api/complaints/:reference` | Authenticated | One complaint by reference |
 
 Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 `/api` allows 100 per 15 minutes.
@@ -170,12 +176,26 @@ Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 - Preflight responses are cached for 10 minutes, and the `RateLimit*` headers are
   exposed so the browser can read throttling information.
 
+### Complaints
+
+- Categories, statuses and priorities live in one file:
+  `backend/src/config/complaint.js`. Add, rename or retire an entry there —
+  validation, `/api/complaints/meta` and the UI all follow with no other changes.
+- References look like `MUN-2026-000001`, generated from an atomic counter.
+- Citizens can see other people's complaints in their area, but the reporter is
+  shown as a masked display name such as `Zaid K.` — never an email, user id or
+  internal history. Officers and administrators see the full record.
+- List filters: `status`, `category`, `area`, `mine=true`, `page`, `limit`
+  (maximum 50). Results are newest first.
+
 ---
 
 ## Known issues
 
 The project is alpha, so this list is expected to shrink quickly.
 
+- Complaints can be submitted and browsed, but there is no status workflow,
+  assignment, comments or attachments yet.
 - Account provisioning is deliberately minimal: no editing, deactivation,
   password reset, search or pagination yet.
 - There is no complaint UI and no citizen-facing interface.
@@ -187,10 +207,10 @@ The project is alpha, so this list is expected to shrink quickly.
 
 Near-term work, roughly in order:
 
-1. Add the complaint domain: model, categories, statuses, priority, attachments.
-2. Complaint APIs: submit, list, filter, assign, update status, comment.
-3. Frontend: citizen submission and tracking, plus officer and admin complaint
-   dashboards.
+1. Status workflow: officer assignment and status transitions with notes and a
+   visible history trail.
+2. Citizen UI: submit a complaint, browse by area, track by reference.
+3. Attachments (photos) and notifications.
 4. Tests, CI, and a deployment path.
 
 ---
