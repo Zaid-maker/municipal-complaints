@@ -5,9 +5,10 @@ import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 
-import authRoutes from "./routes/authRoutes.js";
+import authRoutes from "./src/routes/authRoutes.js";
+import adminRoutes from "./src/routes/adminRoutes.js";
 
-import connectDB from "./config/db.js";
+import connectDB from "./src/config/db.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 if (process.env.NODE_ENV === "development") {
     app.use(morgan("dev"));

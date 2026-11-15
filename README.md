@@ -27,14 +27,12 @@ implemented yet.
 | Registration, login, JWT sessions | Implemented |
 | Role-based access control (`citizen`, `officer`, `admin`) | Implemented |
 | One-time initial admin bootstrap | Implemented |
-| Admin staff account provisioning | Implemented (route not yet mounted) |
+| Admin staff account provisioning | Implemented |
 | Complaint model, submission, tracking, status workflow | **Not started** |
 | Frontend application (any real screens) | **Not started** — placeholder page only |
 | Automated tests | **None** |
-| Backend run scripts | **None** (no `dev`/`start` scripts yet) |
 
-See [Known issues](#known-issues) for blockers that currently prevent the
-backend from starting.
+See [Known issues](#known-issues) for the current limitations.
 
 ---
 
@@ -102,7 +100,8 @@ Edit `backend/.env` and set `MONGODB_URI`, a strong `JWT_SECRET`, and (optionall
 API.
 
 ```bash
-bun run server.js
+bun run dev     # restart on change
+bun run start   # plain start
 ```
 
 The API listens on `http://localhost:5000` by default.
@@ -152,15 +151,13 @@ Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 
 The project is alpha, so this list is expected to shrink quickly.
 
-- `server.js` imports `./routes/authRoutes.js` and `./config/db.js`, but those
-  modules live under `src/`, so the server fails to start as-is.
-- `backend/package.json` declares `"type": "commonjs"` while the source uses ES
-  module syntax.
-- `adminRoutes.js` is not mounted in `server.js`; the admin account endpoints are
-  unreachable.
-- The backend has no `dev` or `start` script.
 - The frontend is a single placeholder component with no API client, routing, or
   auth screens.
+- The global `/api` rate limiter is registered after the routers, so it only
+  applies to routes defined below it; `admin` endpoints are not throttled.
+- `GET /api/health` reports `"database": "Connected"` as a static string rather
+  than an actual connection check.
+- There is no automated test suite and no CI.
 
 ---
 
@@ -168,13 +165,11 @@ The project is alpha, so this list is expected to shrink quickly.
 
 Near-term work, roughly in order:
 
-1. Fix startup blockers (import paths, module type, backend scripts).
-2. Mount the admin routes.
-3. Add the complaint domain: model, categories, statuses, priority, attachments.
-4. Complaint APIs: submit, list, filter, assign, update status, comment.
-5. Frontend: routing, auth pages, citizen submission and tracking, officer and
+1. Add the complaint domain: model, categories, statuses, priority, attachments.
+2. Complaint APIs: submit, list, filter, assign, update status, comment.
+3. Frontend: routing, auth pages, citizen submission and tracking, officer and
    admin dashboards.
-6. Tests, CI, and a deployment path.
+4. Tests, CI, and a deployment path.
 
 ---
 
