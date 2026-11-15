@@ -14,9 +14,9 @@ A web application built for **Pakistan**, where citizens report municipal issues
 (roads, water, waste, lighting, etc.) to their local government and municipal
 staff triage and resolve them.
 
-The project is currently at the scaffolding stage: the authentication and staff
-account layer is in place, while the complaint domain itself has not been
-implemented yet.
+The project is currently at the scaffolding stage: authentication, a staff console,
+and administrator/officer account provisioning are in place, while the complaint
+domain itself has not been implemented yet.
 
 ---
 
@@ -27,9 +27,10 @@ implemented yet.
 | Registration, login, JWT sessions | Implemented |
 | Role-based access control (`citizen`, `officer`, `admin`) | Implemented |
 | One-time initial admin bootstrap | Implemented |
-| Admin staff account provisioning | Implemented |
+| Admin staff account provisioning | Implemented (create and list) |
+| Staff console UI (sign in, initial setup, provisioning) | Implemented |
 | Complaint model, submission, tracking, status workflow | **Not started** |
-| Frontend application (any real screens) | **Not started** — placeholder page only |
+| Citizen-facing UI | **Not started** |
 | Automated tests | **None** |
 
 See [Known issues](#known-issues) for the current limitations.
@@ -72,8 +73,14 @@ See [Known issues](#known-issues) for the current limitations.
 │       ├── middleware/           # protect, authorize
 │       └── validators/           # Zod schemas
 └── frontend/
-    ├── vite.config.js
-    └── src/                      # React app (placeholder)
+    ├── vite.config.js            # Dev server + /api proxy to the backend
+    └── src/
+        ├── lib/api.js            # Fetch wrapper and ApiError
+        ├── context/              # AuthProvider (token, session, sign in/out)
+        ├── components/ui.jsx     # Card, Button, fields, alerts, badges
+        ├── pages/AuthPage.jsx    # Sign in and first-admin setup
+        ├── pages/StaffAccountsPage.jsx
+        └── App.jsx               # Session and role routing
 ```
 
 ---
@@ -95,9 +102,9 @@ bun install
 cp .env.example .env
 ```
 
-Edit `backend/.env` and set `MONGODB_URI`, a strong `JWT_SECRET`, and (optionally)
-`ADMIN_BOOTSTRAP_KEY` if you want to create the first administrator through the
-API.
+Edit `backend/.env` and set `MONGODB_URI`, a strong `JWT_SECRET`, and
+`ADMIN_BOOTSTRAP_KEY` if you want to create the first administrator from the
+console.
 
 ```bash
 bun run dev     # restart on change
@@ -114,16 +121,22 @@ bun install
 bun run dev
 ```
 
-The Vite dev server runs on `http://localhost:5173`, which matches the default
-`CLIENT_URL` used by the backend's CORS configuration.
+The Vite dev server runs on `http://localhost:5173` and proxies `/api` to the
+backend, so no CORS setup is needed in development. Open it in a browser.
 
-### 3. Create the first administrator
+For other deployments, set `VITE_API_URL` (for example
+`VITE_API_URL=https://api.example.gov.pk`) at build time; when it is empty the app
+uses same-origin requests.
 
-1. `GET /api/auth/bootstrap-status` — check whether setup is available.
-2. `POST /api/auth/bootstrap-admin` with `name`, `email`, `password`, and
-   `bootstrapKey`.
-3. Further staff accounts are created by an admin via
-   `POST /api/admin/accounts`.
+### 3. Sign in and create accounts
+
+1. If no administrator exists yet and `ADMIN_BOOTSTRAP_KEY` is set, the sign-in
+   screen offers **Create the first administrator**. Use the key from the
+   environment.
+2. Sign in; administrators land on **Staff accounts**.
+3. Create officer or administrator accounts with a temporary password and share
+   it with the staff member securely.
+4. The same endpoints are available directly: `GET`/`POST /api/admin/accounts`.
 
 ---
 
@@ -151,8 +164,9 @@ Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 
 The project is alpha, so this list is expected to shrink quickly.
 
-- The frontend is a single placeholder component with no API client, routing, or
-  auth screens.
+- Account provisioning is deliberately minimal: no editing, deactivation,
+  password reset, search or pagination yet.
+- There is no complaint UI and no citizen-facing interface.
 - There is no automated test suite and no CI.
 
 ---
@@ -163,8 +177,8 @@ Near-term work, roughly in order:
 
 1. Add the complaint domain: model, categories, statuses, priority, attachments.
 2. Complaint APIs: submit, list, filter, assign, update status, comment.
-3. Frontend: routing, auth pages, citizen submission and tracking, officer and
-   admin dashboards.
+3. Frontend: citizen submission and tracking, plus officer and admin complaint
+   dashboards.
 4. Tests, CI, and a deployment path.
 
 ---
