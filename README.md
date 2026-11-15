@@ -1,6 +1,7 @@
 # Municipal Complaint Management System
 
-`municipal-complaints` — a civic complaint reporting and resolution platform.
+`municipal-complaints` — a civic complaint reporting and resolution platform for
+Pakistani municipalities.
 
 > [!WARNING]
 > **This project is in very early alpha (pre-release).**
@@ -9,8 +10,9 @@
 > breaking changes without notice. Expect missing features, bugs, and
 > unfinished code.
 
-A web application for citizens to report municipal issues (roads, water, waste,
-lighting, etc.) and for municipal staff to triage and resolve them.
+A web application built for **Pakistan**, where citizens report municipal issues
+(roads, water, waste, lighting, etc.) to their local government and municipal
+staff triage and resolve them.
 
 The project is currently at the scaffolding stage: the authentication and staff
 account layer is in place, while the complaint domain itself has not been
