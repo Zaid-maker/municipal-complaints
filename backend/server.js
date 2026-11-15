@@ -9,6 +9,7 @@ import rateLimit from "express-rate-limit";
 import authRoutes from "./src/routes/authRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
 
+import { corsOptions } from "./src/config/cors.js";
 import connectDB from "./src/config/db.js";
 
 dotenv.config();
@@ -26,10 +27,7 @@ app.disable("x-powered-by");
 
 app.use(helmet());
 
-app.use(cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true
-}));
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -75,9 +73,13 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-    console.error(err);
+    const status = err.status || 500;
 
-    res.status(err.status || 500).json({
+    // Client errors (bad CORS origin, malformed request) are expected; only
+    // log the ones that indicate a real server fault.
+    if (status >= 500) console.error(err);
+
+    res.status(status).json({
         success: false,
         message: err.message || "Internal server error"
     });

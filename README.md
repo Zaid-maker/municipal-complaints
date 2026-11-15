@@ -158,6 +158,18 @@ All responses follow the shape `{ success, message?, data?, errors? }`.
 Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 `/api` allows 100 per 15 minutes.
 
+### CORS
+
+`CLIENT_URL` accepts a comma-separated list of browser origins, for example
+`http://localhost:5173,https://complaints.example.gov.pk`. Behaviour:
+
+- In development, any `localhost` or `127.0.0.1` port is also allowed, so Vite can
+  fall back to `5174` when `5173` is taken.
+- Requests without an `Origin` header (curl, server-to-server) are allowed.
+- Any other browser origin receives `403 Origin ... is not allowed by CORS`.
+- Preflight responses are cached for 10 minutes, and the `RateLimit*` headers are
+  exposed so the browser can read throttling information.
+
 ---
 
 ## Known issues
