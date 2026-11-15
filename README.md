@@ -1,5 +1,7 @@
 # Municipal Complaint Management System
 
+`municipal-complaints` — a civic complaint reporting and resolution platform.
+
 > [!WARNING]
 > **This project is in very early alpha (pre-release).**
 > It is incomplete, unstable, and should not be used in production or for real
