@@ -1,9 +1,16 @@
 import { StatusBadge } from "./ui";
 import { timeAgo } from "../lib/format";
 
-export default function ComplaintCard({ complaint }) {
+export default function ComplaintCard({ complaint, actions }) {
+  const reporterLabel =
+    complaint.reporter?.name ?? complaint.reporter?.displayName ?? "Citizen";
+
   const mapHref = complaint.location
     ? `https://www.openstreetmap.org/?mlat=${complaint.location.lat}&mlon=${complaint.location.lng}#map=17/${complaint.location.lat}/${complaint.location.lng}`
+    : null;
+
+  const directionsHref = complaint.location
+    ? `https://www.google.com/maps/dir/?api=1&destination=${complaint.location.lat},${complaint.location.lng}`
     : null;
 
   return (
@@ -32,7 +39,7 @@ export default function ComplaintCard({ complaint }) {
           {complaint.area}
           {complaint.address ? ` · ${complaint.address}` : ""}
         </span>
-        <span>Reported by {complaint.reporter?.displayName ?? "Citizen"}</span>
+        <span>Reported by {reporterLabel}</span>
         <span>{complaint.priorityLabel} priority</span>
 
         {mapHref && (
@@ -45,7 +52,22 @@ export default function ComplaintCard({ complaint }) {
             View on map
           </a>
         )}
+
+        {directionsHref && (
+          <a
+            href={directionsHref}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900"
+          >
+            Directions
+          </a>
+        )}
       </div>
+
+      {actions && (
+        <div className="mt-4 border-t border-slate-100 pt-4">{actions}</div>
+      )}
     </article>
   );
 }

@@ -55,9 +55,39 @@ export const createComplaintSchema = z.object({
         .default("normal")
 }).strict();
 
+export const updateComplaintSchema = z
+    .object({
+        assignedTo: z
+            .string()
+            .regex(/^[0-9a-f]{24}$/i, "Choose a valid staff account")
+            .nullable()
+            .optional(),
+
+        status: z
+            .enum(STATUS_SLUGS, {
+                error: "Choose a valid status"
+            })
+            .optional(),
+
+        note: z
+            .string()
+            .trim()
+            .max(500, "Note cannot exceed 500 characters")
+            .optional()
+    })
+    .strict()
+    .refine(
+        (data) =>
+            data.assignedTo !== undefined ||
+            data.status !== undefined ||
+            Boolean(data.note),
+        { message: "Provide a status, an assignee or a note" }
+    );
+
 export const listComplaintsQuerySchema = z.object({
     status: z.enum(STATUS_SLUGS).optional(),
     category: z.enum(CATEGORY_SLUGS).optional(),
+    priority: z.enum(PRIORITY_SLUGS).optional(),
 
     area: z
         .string()
@@ -70,6 +100,9 @@ export const listComplaintsQuerySchema = z.object({
         .enum(["true", "false"])
         .optional()
         .transform((value) => value === "true"),
+
+    // Staff filters: assigned=mine or assigned=unassigned.
+    assigned: z.enum(["mine", "unassigned"]).optional(),
 
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(20)

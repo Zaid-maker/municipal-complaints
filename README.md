@@ -32,7 +32,9 @@ domain itself has not been implemented yet.
 | Complaint model, submission and browsing | Implemented |
 | Citizen UI (register, report, nearby, my reports, track) | Implemented |
 | Optional map pin on complaints | Implemented |
-| Status workflow, assignment, comments | **Not started** |
+| Officer queue and admin complaint console | Implemented |
+| Assignment, status workflow and notes | Implemented |
+| Comments and attachments | **Not started** |
 | Automated tests | **None** |
 
 See [Known issues](#known-issues) for the current limitations.
@@ -85,11 +87,16 @@ See [Known issues](#known-issues) for the current limitations.
         ├── components/ui.jsx     # Card, Button, fields, alerts, badges
         ├── components/ComplaintCard.jsx
         ├── components/LocationPicker.jsx
+        ├── components/StaffComplaintControls.jsx
+        ├── components/StaffShell.jsx
         ├── pages/AuthPage.jsx    # Sign in, citizen registration, first-admin setup
         ├── pages/CitizenApp.jsx  # Citizen portal shell and tabs
         ├── pages/ReportComplaintPage.jsx
         ├── pages/ComplaintsFeedPage.jsx
         ├── pages/TrackComplaintPage.jsx
+        ├── pages/AdminApp.jsx    # Complaints + staff accounts
+        ├── pages/OfficerApp.jsx  # My queue + unassigned
+        ├── pages/StaffComplaintsPage.jsx
         ├── pages/StaffAccountsPage.jsx
         └── App.jsx               # Session and role routing
 ```
@@ -169,6 +176,7 @@ All responses follow the shape `{ success, message?, data?, errors? }`.
 | `GET` | `/api/complaints` | Authenticated | Browse complaints, filter by area |
 | `POST` | `/api/complaints` | Authenticated | Submit a complaint |
 | `GET` | `/api/complaints/:reference` | Authenticated | One complaint by reference |
+| `PATCH` | `/api/complaints/:reference` | Officer/admin | Assign, change status, add a note |
 
 Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 `/api` allows 100 per 15 minutes.
@@ -198,8 +206,22 @@ Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
   "lng": 74.35875 }`. Citizens pick it on an OpenStreetMap panel, use their
   device location, or skip it. Cards link to the pin and the tracking page
   shows it on a read-only map.
-- List filters: `status`, `category`, `area`, `mine=true`, `page`, `limit`
-  (maximum 50). Results are newest first.
+- List filters: `status`, `category`, `area`, `priority`, `mine=true`,
+  `assigned=mine`, `assigned=unassigned`, `page`, `limit` (maximum 50).
+  Results are newest first.
+
+### Dispatch
+
+- Administrators see every complaint, can assign or unassign it, and can change
+  status with an optional note.
+- Officers have two queues: their own assigned work and the unassigned pool.
+  An officer can claim an unassigned complaint for themselves, then change its
+  status. They cannot take or update another officer's complaint.
+- Every assignment, status change and note is appended to the complaint history
+  with the acting staff member and timestamp. Citizens see the resulting status
+  but not internal notes or reporter contact details.
+- Staff cards link to the pin in OpenStreetMap and offer Google Maps directions,
+  so a dispatched officer can navigate straight to the spot.
 
 ---
 
@@ -207,12 +229,10 @@ Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 
 The project is alpha, so this list is expected to shrink quickly.
 
-- Complaints can be submitted and browsed, but there is no status workflow,
-  assignment, comments or attachments yet.
+- There are no comments, attachments or notifications yet, and the history trail
+  is only visible in the API, not in the UI.
 - Account provisioning is deliberately minimal: no editing, deactivation,
   password reset, search or pagination yet.
-- Citizens can browse and track complaints, but officers have no complaint queue
-  or dashboard yet.
 - There is no automated test suite and no CI.
 
 ---
@@ -221,10 +241,10 @@ The project is alpha, so this list is expected to shrink quickly.
 
 Near-term work, roughly in order:
 
-1. Status workflow: officer assignment and status transitions with notes and a
-   visible history trail.
-2. Officer and admin complaint dashboards.
-3. Attachments (photos) and notifications.
+1. Show the complaint history trail to staff and expose a citizen-friendly
+   progress view.
+2. Comments, photo attachments and notifications.
+3. Area-level reporting and workload summaries.
 4. Tests, CI, and a deployment path.
 
 ---

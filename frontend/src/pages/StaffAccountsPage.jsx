@@ -15,7 +15,7 @@ import {
 const EMPTY_FORM = { name: "", email: "", password: "", role: "officer" };
 
 export default function StaffAccountsPage() {
-  const { user, token, signOut } = useAuth();
+  const { token, signOut } = useAuth();
 
   const [accounts, setAccounts] = useState([]);
   const [loadError, setLoadError] = useState(null);
@@ -116,33 +116,8 @@ export default function StaffAccountsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-              Municipal Complaints
-            </p>
-            <h1 className="text-lg font-semibold text-slate-900">Staff accounts</h1>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium text-slate-900">{user.name}</p>
-              <p className="text-xs text-slate-500">{user.email}</p>
-            </div>
-
-            <RoleBadge role={user.role} />
-
-            <Button variant="secondary" onClick={signOut}>
-              Sign out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <Card className="order-2 overflow-hidden lg:order-1">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <Card className="order-2 overflow-hidden lg:order-1">
           <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
             <div>
               <h2 className="font-semibold text-slate-900">Officers and administrators</h2>
@@ -262,7 +237,6 @@ export default function StaffAccountsPage() {
             </Button>
           </form>
         </Card>
-      </main>
     </div>
   );
 }

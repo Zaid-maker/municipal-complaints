@@ -4,9 +4,10 @@ import {
     createComplaint,
     getComplaint,
     getComplaintMeta,
-    listComplaints
+    listComplaints,
+    updateComplaint
 } from "../controllers/complaintController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { authorize, protect } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use(protect);
 
 router.route("/").get(listComplaints).post(createComplaint);
 router.get("/:reference", getComplaint);
+router.patch("/:reference", authorize("officer", "admin"), updateComplaint);
 
 export default router;

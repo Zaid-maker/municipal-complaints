@@ -1,5 +1,6 @@
 import Complaint from "../models/Complaint.js";
 import Counter from "../models/Counter.js";
+import User from "../models/User.js";
 import {
     COMPLAINT_CATEGORIES,
     COMPLAINT_PRIORITIES,
@@ -10,7 +11,8 @@ import {
 } from "../config/complaint.js";
 import {
     createComplaintSchema,
-    listComplaintsQuerySchema
+    listComplaintsQuerySchema,
+    updateComplaintSchema
 } from "../validators/complaintValidators.js";
 
 const isStaff = (user) => user.role === "officer" || user.role === "admin";
@@ -153,13 +155,18 @@ export const listComplaints = async (req, res, next) => {
             });
         }
 
-        const { status, category, area, mine, page, limit } = parsed.data;
+        const { status, category, priority, area, mine, assigned, page, limit } =
+            parsed.data;
         const filter = {};
 
         if (status) filter.status = status;
         if (category) filter.category = category;
+        if (priority) filter.priority = priority;
         if (area) filter.area = new RegExp(`^${escapeRegex(area)}$`, "i");
         if (mine) filter.citizen = req.user._id;
+
+        if (assigned === "mine") filter.assignedTo = req.user._id;
+        if (assigned === "unassigned") filter.assignedTo = null;
 
         const [total, complaints] = await Promise.all([
             Complaint.countDocuments(filter),
@@ -209,6 +216,131 @@ export const getComplaint = async (req, res, next) => {
             success: true,
             data: {
                 complaint: serializeComplaint(complaint, req.user)
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateComplaint = async (req, res, next) => {
+    try {
+        const parsed = updateComplaintSchema.safeParse(req.body);
+
+        if (!parsed.success) {
+            const errors = parsed.error.flatten();
+
+            return res.status(400).json({
+                success: false,
+                message: errors.formErrors[0] ?? "Validation failed",
+                errors: errors.fieldErrors
+            });
+        }
+
+        const reference = String(req.params.reference ?? "").toUpperCase();
+        const complaint = await Complaint.findOne({ reference });
+
+        if (!complaint) {
+            return res.status(404).json({
+                success: false,
+                message: "Complaint not found"
+            });
+        }
+
+        const actor = req.user;
+        const isAdmin = actor.role === "admin";
+        const changes = parsed.data;
+        const notes = [];
+
+        if (changes.assignedTo !== undefined) {
+            const targetId = changes.assignedTo;
+            const currentAssignee = complaint.assignedTo?.toString() ?? null;
+
+            if (!isAdmin) {
+                // Officers can claim an unassigned complaint for themselves, but
+                // cannot move or take over somebody else's work.
+                if (!targetId || targetId !== actor._id.toString()) {
+                    return res.status(403).json({
+                        success: false,
+                        message: "Officers can only claim complaints for themselves"
+                    });
+                }
+
+                if (currentAssignee && currentAssignee !== actor._id.toString()) {
+                    return res.status(403).json({
+                        success: false,
+                        message: "This complaint is already assigned to another officer"
+                    });
+                }
+            }
+
+            if (targetId) {
+                const target = await User.findOne({
+                    _id: targetId,
+                    role: { $in: ["officer", "admin"] }
+                }).select("name");
+
+                if (!target) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Choose an officer account to assign"
+                    });
+                }
+
+                if (currentAssignee !== target._id.toString()) {
+                    complaint.assignedTo = target._id;
+                    notes.push(`Assigned to ${target.name}`);
+                }
+            } else if (complaint.assignedTo) {
+                complaint.assignedTo = null;
+                notes.push("Unassigned");
+            }
+        }
+
+        const assignedToActor =
+            complaint.assignedTo?.toString() === actor._id.toString();
+
+        if (
+            (changes.status !== undefined || changes.note) &&
+            !isAdmin &&
+            !assignedToActor
+        ) {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "Only the assigned officer or an administrator can update this complaint"
+            });
+        }
+
+        if (changes.status && changes.status !== complaint.status) {
+            complaint.status = changes.status;
+            notes.push(
+                changes.note || `Status changed to ${statusLabel(changes.status)}`
+            );
+        } else if (changes.note) {
+            notes.push(changes.note);
+        }
+
+        if (notes.length > 0) {
+            complaint.history.push(
+                ...notes.map((note) => ({
+                    status: complaint.status,
+                    note,
+                    changedBy: actor._id
+                }))
+            );
+
+            await complaint.save();
+        }
+
+        await complaint.populate("citizen", "name email");
+        await complaint.populate("assignedTo", "name email");
+
+        return res.status(200).json({
+            success: true,
+            message: notes[0] ?? "Complaint unchanged",
+            data: {
+                complaint: serializeComplaint(complaint, actor)
             }
         });
     } catch (error) {
