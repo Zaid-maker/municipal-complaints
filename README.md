@@ -31,6 +31,7 @@ domain itself has not been implemented yet.
 | Staff console UI (sign in, initial setup, provisioning) | Implemented |
 | Complaint model, submission and browsing | Implemented |
 | Citizen UI (register, report, nearby, my reports, track) | Implemented |
+| Optional map pin on complaints | Implemented |
 | Status workflow, assignment, comments | **Not started** |
 | Automated tests | **None** |
 
@@ -54,6 +55,7 @@ See [Known issues](#known-issues) for the current limitations.
 - React 19
 - Vite 8
 - Tailwind CSS 4
+- Leaflet + OpenStreetMap tiles for the location picker
 - React Compiler (via Babel plugin)
 - Oxlint
 
@@ -82,6 +84,7 @@ See [Known issues](#known-issues) for the current limitations.
         ├── context/              # AuthProvider, AuthContext, useAuth
         ├── components/ui.jsx     # Card, Button, fields, alerts, badges
         ├── components/ComplaintCard.jsx
+        ├── components/LocationPicker.jsx
         ├── pages/AuthPage.jsx    # Sign in, citizen registration, first-admin setup
         ├── pages/CitizenApp.jsx  # Citizen portal shell and tabs
         ├── pages/ReportComplaintPage.jsx
@@ -191,6 +194,10 @@ Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 - Citizens can see other people's complaints in their area, but the reporter is
   shown as a masked display name such as `Zaid K.` — never an email, user id or
   internal history. Officers and administrators see the full record.
+- A complaint can carry an optional pin: `"location": { "lat": 31.52037,
+  "lng": 74.35875 }`. Citizens pick it on an OpenStreetMap panel, use their
+  device location, or skip it. Cards link to the pin and the tracking page
+  shows it on a read-only map.
 - List filters: `status`, `category`, `area`, `mine=true`, `page`, `limit`
   (maximum 50). Results are newest first.
 

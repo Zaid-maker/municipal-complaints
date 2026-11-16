@@ -3,6 +3,7 @@ import { useState } from "react";
 import { apiRequest } from "../lib/api";
 import { useAuth } from "../context/useAuth";
 import ComplaintCard from "../components/ComplaintCard";
+import LocationPicker from "../components/LocationPicker";
 import { Alert, Button, Card, TextField } from "../components/ui";
 import { formatDate } from "../lib/format";
 
@@ -106,6 +107,16 @@ export default function TrackComplaintPage() {
               </div>
             </dl>
           </Card>
+
+          {complaint.location && (
+            <Card className="p-5">
+              <h3 className="text-sm font-semibold text-slate-900">Location</h3>
+
+              <div className="mt-3">
+                <LocationPicker value={complaint.location} readOnly heightClass="h-56" />
+              </div>
+            </Card>
+          )}
         </div>
       )}
     </div>

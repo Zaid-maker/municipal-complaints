@@ -35,6 +35,19 @@ export const createComplaintSchema = z.object({
         .max(200, "Address cannot exceed 200 characters")
         .optional(),
 
+    location: z
+        .object({
+            lat: z.coerce
+                .number()
+                .min(-90, "Latitude must be between -90 and 90")
+                .max(90, "Latitude must be between -90 and 90"),
+            lng: z.coerce
+                .number()
+                .min(-180, "Longitude must be between -180 and 180")
+                .max(180, "Longitude must be between -180 and 180")
+        })
+        .optional(),
+
     priority: z
         .enum(PRIORITY_SLUGS, {
             error: "Choose a valid priority"

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { apiRequest, fieldError } from "../lib/api";
 import { useAuth } from "../context/useAuth";
+import LocationPicker from "../components/LocationPicker";
 import { Alert, Button, Card, SelectField, TextArea, TextField } from "../components/ui";
 
 const EMPTY_FORM = {
@@ -10,6 +11,7 @@ const EMPTY_FORM = {
   description: "",
   area: "",
   address: "",
+  location: null,
   priority: "normal"
 };
 
@@ -46,6 +48,7 @@ export default function ReportComplaintPage({ categories, onSubmitted }) {
           description: values.description.trim(),
           area: values.area.trim(),
           address: values.address.trim() || undefined,
+          location: values.location || undefined,
           priority: values.priority
         }
       });
@@ -179,6 +182,13 @@ export default function ReportComplaintPage({ categories, onSubmitted }) {
             maxLength={200}
           />
         </div>
+
+        <LocationPicker
+          label="Pin the location (optional)"
+          hint="Tap the map to drop a pin, drag it to adjust, or use your current location."
+          value={values.location}
+          onChange={(location) => update("location", location)}
+        />
 
         <Button type="submit" busy={submitting} className="w-full">
           {submitting ? "Submitting…" : "Submit complaint"}

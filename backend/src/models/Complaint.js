@@ -31,6 +31,24 @@ const historyEntrySchema = new mongoose.Schema(
     { _id: false }
 );
 
+const locationSchema = new mongoose.Schema(
+    {
+        lat: {
+            type: Number,
+            required: true,
+            min: -90,
+            max: 90
+        },
+        lng: {
+            type: Number,
+            required: true,
+            min: -180,
+            max: 180
+        }
+    },
+    { _id: false }
+);
+
 const complaintSchema = new mongoose.Schema(
     {
         reference: {
@@ -85,6 +103,14 @@ const complaintSchema = new mongoose.Schema(
             type: String,
             trim: true,
             maxlength: 200
+        },
+
+        // Optional map pin chosen by the citizen. Kept as plain coordinates so
+        // the API stays simple; a 2dsphere index can be added when "near me"
+        // radius search is introduced.
+        location: {
+            type: locationSchema,
+            default: null
         },
 
         priority: {

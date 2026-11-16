@@ -35,6 +35,9 @@ const baseComplaint = (complaint) => ({
     description: complaint.description,
     area: complaint.area,
     address: complaint.address || null,
+    location: complaint.location
+        ? { lat: complaint.location.lat, lng: complaint.location.lng }
+        : null,
     priority: complaint.priority,
     priorityLabel: priorityLabel(complaint.priority),
     status: complaint.status,

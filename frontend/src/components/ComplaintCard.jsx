@@ -2,6 +2,10 @@ import { StatusBadge } from "./ui";
 import { timeAgo } from "../lib/format";
 
 export default function ComplaintCard({ complaint }) {
+  const mapHref = complaint.location
+    ? `https://www.openstreetmap.org/?mlat=${complaint.location.lat}&mlon=${complaint.location.lng}#map=17/${complaint.location.lat}/${complaint.location.lng}`
+    : null;
+
   return (
     <article className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <div className="flex flex-wrap items-center gap-2">
@@ -30,6 +34,17 @@ export default function ComplaintCard({ complaint }) {
         </span>
         <span>Reported by {complaint.reporter?.displayName ?? "Citizen"}</span>
         <span>{complaint.priorityLabel} priority</span>
+
+        {mapHref && (
+          <a
+            href={mapHref}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900"
+          >
+            View on map
+          </a>
+        )}
       </div>
     </article>
   );
