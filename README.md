@@ -35,6 +35,7 @@ domain itself has not been implemented yet.
 | Officer queue and admin complaint console | Implemented |
 | Assignment, status workflow and notes | Implemented |
 | Photo attachments on complaints | Implemented (JPEG/PNG/WebP) |
+| Complaint anti-spam (rate limit, daily cap, duplicate check, honeypot) | Implemented |
 | Comments and notifications | **Not started** |
 | Automated tests | **None** |
 
@@ -76,10 +77,12 @@ See [Known issues](#known-issues) for the current limitations.
 │       ├── config/db.js          # Mongoose connection
 │       ├── config/complaint.js   # Categories, statuses, priorities (edit here)
 │       ├── config/uploads.js     # Upload folder, size and type limits
+│       ├── config/spam.js        # Report rate, daily and duplicate limits
 │       ├── models/               # User, Bootstrap, Complaint, Counter
 │       ├── controllers/          # auth, admin, complaints
 │       ├── routes/               # auth, admin, complaints
-│       ├── middleware/           # protect, authorize, upload handling
+│       ├── middleware/           # protect, authorize, upload, rate limiting
+│       ├── services/             # duplicate and quota checks
 │       └── validators/           # Zod schemas
 └── frontend/
     ├── vite.config.js            # Dev server + /api proxy to the backend
@@ -219,6 +222,26 @@ Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
   `assigned=mine`, `assigned=unassigned`, `page`, `limit` (maximum 50).
   Results are newest first.
 
+### Anti-spam
+
+Complaint submission has four layers, all configurable in `backend/.env`:
+
+| Layer | Default | Purpose |
+| --- | --- | --- |
+| Burst rate limit | 5 reports / 10 min per account | Stops rapid-fire flooding |
+| Rolling daily cap | 15 reports / 24 h per account | Caps sustained spam |
+| Duplicate check | Same title + category by the same account in 24 h | Returns `409` with the existing reference |
+| Honeypot | Hidden `website` field | Rejects bots that fill every input |
+
+- Rate limiting is keyed by account id, not IP, so a shared office or household
+  connection is not punished for one person's reports.
+- Duplicate detection normalizes case, punctuation and spacing before comparing
+  titles. The response points the citizen at the report they already filed.
+- The limits live in `backend/src/config/spam.js`; tune them with
+  `COMPLAINT_RATE_LIMIT`, `COMPLAINT_RATE_WINDOW_MS`,
+  `COMPLAINT_DAILY_LIMIT` and `COMPLAINT_DUPLICATE_WINDOW_MS`.
+- Registration and login are already rate-limited separately per IP.
+
 ### Dispatch
 
 - Administrators see every complaint, can assign or unassign it, and can change
@@ -255,6 +278,8 @@ The project is alpha, so this list is expected to shrink quickly.
   visible in the API, not in the UI.
 - Photo attachments cannot be edited or replaced, and uploads rely on local
   disk rather than object storage.
+- Anti-spam is deliberately basic: no CAPTCHA, email verification or
+  administrator account suspension yet.
 - Account provisioning is deliberately minimal: no editing, deactivation,
   password reset, search or pagination yet.
 - There is no automated test suite and no CI.
@@ -268,8 +293,9 @@ Near-term work, roughly in order:
 1. Show the complaint history trail to staff and expose a citizen-friendly
    progress view.
 2. Comments, notifications and photo captions/replacements.
-3. Area-level reporting and workload summaries.
-4. Tests, CI, and a deployment path.
+3. Account suspension and stronger verification for repeat spam accounts.
+4. Area-level reporting and workload summaries.
+5. Tests, CI, and a deployment path.
 
 ---
 

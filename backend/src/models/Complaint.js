@@ -179,6 +179,7 @@ const complaintSchema = new mongoose.Schema(
 
 complaintSchema.index({ createdAt: -1 });
 complaintSchema.index({ area: 1, createdAt: -1 });
+complaintSchema.index({ citizen: 1, createdAt: -1 });
 
 const Complaint = mongoose.model("Complaint", complaintSchema);
 

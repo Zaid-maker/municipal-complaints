@@ -12,7 +12,8 @@ const EMPTY_FORM = {
   area: "",
   address: "",
   location: null,
-  priority: "normal"
+  priority: "normal",
+  website: ""
 };
 
 const FIELD_NAMES = ["category", "title", "description", "area", "address", "priority"];
@@ -49,7 +50,8 @@ export default function ReportComplaintPage({ categories, onSubmitted }) {
           area: values.area.trim(),
           address: values.address.trim() || undefined,
           location: values.location || undefined,
-          priority: values.priority
+          priority: values.priority,
+          website: values.website
         }
       });
 
@@ -189,6 +191,23 @@ export default function ReportComplaintPage({ categories, onSubmitted }) {
           value={values.location}
           onChange={(location) => update("location", location)}
         />
+
+        {/* Honeypot: hidden from people, tempting to bots that fill every field. */}
+        <div
+          aria-hidden="true"
+          className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+        >
+          <label htmlFor="complaint-website">Website</label>
+          <input
+            id="complaint-website"
+            name="website"
+            type="text"
+            autoComplete="off"
+            tabIndex={-1}
+            value={values.website}
+            onChange={(event) => update("website", event.target.value)}
+          />
+        </div>
 
         <Button type="submit" busy={submitting} className="w-full">
           {submitting ? "Submitting…" : "Submit complaint"}

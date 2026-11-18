@@ -18,6 +18,7 @@ import {
     listComplaintsQuerySchema,
     updateComplaintSchema
 } from "../validators/complaintValidators.js";
+import { checkComplaintSpam } from "../services/complaintSpam.js";
 
 const isStaff = (user) => user.role === "officer" || user.role === "admin";
 
@@ -125,11 +126,30 @@ export const createComplaint = async (req, res, next) => {
             });
         }
 
+        const { website, ...fields } = parsed.data;
+
+        if (website) {
+            return res.status(400).json({
+                success: false,
+                message: "Your report could not be submitted."
+            });
+        }
+
+        const spam = await checkComplaintSpam(req.user._id, fields);
+
+        if (spam) {
+            return res.status(spam.status).json({
+                success: false,
+                message: spam.message,
+                data: spam.reference ? { reference: spam.reference } : undefined
+            });
+        }
+
         const sequence = await Counter.next("complaint");
         const reference = `MUN-${new Date().getFullYear()}-${String(sequence).padStart(6, "0")}`;
 
         const complaint = await Complaint.create({
-            ...parsed.data,
+            ...fields,
             reference,
             citizen: req.user._id,
             history: [

@@ -52,7 +52,11 @@ export const createComplaintSchema = z.object({
         .enum(PRIORITY_SLUGS, {
             error: "Choose a valid priority"
         })
-        .default("normal")
+        .default("normal"),
+
+    // Honeypot: real clients leave this hidden field empty. Bots that fill
+    // every input are rejected in the controller.
+    website: z.string().max(200).optional()
 }).strict();
 
 export const updateComplaintSchema = z

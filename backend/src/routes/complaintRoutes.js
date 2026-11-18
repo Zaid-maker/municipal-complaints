@@ -10,6 +10,7 @@ import {
     updateComplaint
 } from "../controllers/complaintController.js";
 import { authorize, protect } from "../middleware/authMiddleware.js";
+import { complaintSubmitLimiter } from "../middleware/complaintRateLimit.js";
 import { requireAttachmentAccess } from "../middleware/complaintAttachmentAccess.js";
 import { uploadComplaintPhotos } from "../middleware/uploadMiddleware.js";
 
@@ -20,7 +21,8 @@ router.get("/meta", getComplaintMeta);
 
 router.use(protect);
 
-router.route("/").get(listComplaints).post(createComplaint);
+router.get("/", listComplaints);
+router.post("/", complaintSubmitLimiter, createComplaint);
 router.get("/:reference", getComplaint);
 router.patch("/:reference", authorize("officer", "admin"), updateComplaint);
 router.post(
