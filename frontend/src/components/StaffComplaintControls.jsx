@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { apiRequest } from "../lib/api";
 import { useAuth } from "../context/useAuth";
+import ComplaintPhotoUpload from "./ComplaintPhotoUpload";
 import { Alert, Button, SelectField, TextField } from "../components/ui";
 
 export default function StaffComplaintControls({
@@ -172,6 +173,10 @@ export default function StaffComplaintControls({
             )}
           </div>
         </form>
+      )}
+
+      {canUpdate && (
+        <ComplaintPhotoUpload complaint={complaint} onUpdated={onUpdated} />
       )}
     </div>
   );

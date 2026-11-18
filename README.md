@@ -34,7 +34,8 @@ domain itself has not been implemented yet.
 | Optional map pin on complaints | Implemented |
 | Officer queue and admin complaint console | Implemented |
 | Assignment, status workflow and notes | Implemented |
-| Comments and attachments | **Not started** |
+| Photo attachments on complaints | Implemented (JPEG/PNG/WebP) |
+| Comments and notifications | **Not started** |
 | Automated tests | **None** |
 
 See [Known issues](#known-issues) for the current limitations.
@@ -49,6 +50,7 @@ See [Known issues](#known-issues) for the current limitations.
 - Mongoose 9 / MongoDB
 - JSON Web Tokens (`jsonwebtoken`) and `bcryptjs`
 - Zod validation
+- Multer for photo uploads
 - Helmet, CORS, Morgan, `express-rate-limit`
 - Executed with [Bun](https://bun.sh)
 
@@ -73,10 +75,11 @@ See [Known issues](#known-issues) for the current limitations.
 │   └── src/
 │       ├── config/db.js          # Mongoose connection
 │       ├── config/complaint.js   # Categories, statuses, priorities (edit here)
+│       ├── config/uploads.js     # Upload folder, size and type limits
 │       ├── models/               # User, Bootstrap, Complaint, Counter
 │       ├── controllers/          # auth, admin, complaints
 │       ├── routes/               # auth, admin, complaints
-│       ├── middleware/           # protect, authorize
+│       ├── middleware/           # protect, authorize, upload handling
 │       └── validators/           # Zod schemas
 └── frontend/
     ├── vite.config.js            # Dev server + /api proxy to the backend
@@ -86,6 +89,8 @@ See [Known issues](#known-issues) for the current limitations.
         ├── context/              # AuthProvider, AuthContext, useAuth
         ├── components/ui.jsx     # Card, Button, fields, alerts, badges
         ├── components/ComplaintCard.jsx
+        ├── components/AttachmentGrid.jsx
+        ├── components/ComplaintPhotoUpload.jsx
         ├── components/LocationPicker.jsx
         ├── components/StaffComplaintControls.jsx
         ├── components/StaffShell.jsx
@@ -139,8 +144,9 @@ bun install
 bun run dev
 ```
 
-The Vite dev server runs on `http://localhost:5173` and proxies `/api` to the
-backend, so no CORS setup is needed in development. Open it in a browser.
+The Vite dev server runs on `http://localhost:5173` and proxies `/api` and
+`/uploads` to the backend, so no CORS setup is needed in development. Open it in
+a browser.
 
 For other deployments, set `VITE_API_URL` (for example
 `VITE_API_URL=https://api.example.gov.pk`) at build time; when it is empty the app
@@ -177,6 +183,8 @@ All responses follow the shape `{ success, message?, data?, errors? }`.
 | `POST` | `/api/complaints` | Authenticated | Submit a complaint |
 | `GET` | `/api/complaints/:reference` | Authenticated | One complaint by reference |
 | `PATCH` | `/api/complaints/:reference` | Officer/admin | Assign, change status, add a note |
+| `POST` | `/api/complaints/:reference/attachments` | Assigned officer/admin | Upload 1–5 photos (`multipart/form-data`, field `photos`) |
+| `GET` | `/uploads/complaints/:filename` | Public | Stored complaint photo |
 
 Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 `/api` allows 100 per 15 minutes.
@@ -223,14 +231,28 @@ Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
 - Staff cards link to the pin in OpenStreetMap and offer Google Maps directions,
   so a dispatched officer can navigate straight to the spot.
 
+### Photos
+
+- The assigned officer or an administrator can attach photos to a complaint to
+  document the problem or the completed fix. Citizens can see the photos too.
+- Limits: JPEG, PNG or WebP only; up to 5 photos per request; 5 MB per photo.
+  These live in `backend/src/config/uploads.js`.
+- Files are written to `backend/uploads/complaints/` and served from
+  `/uploads/complaints/<file>`. The folder is git-ignored and created on start.
+- Each upload is recorded in the complaint history as `Added N photo(s)`, and
+  photo bytes are deleted again if the database write fails.
+- There is no delete endpoint yet; a photo stays with the complaint.
+
 ---
 
 ## Known issues
 
 The project is alpha, so this list is expected to shrink quickly.
 
-- There are no comments, attachments or notifications yet, and the history trail
-  is only visible in the API, not in the UI.
+- There are no comments or notifications yet, and the history trail is only
+  visible in the API, not in the UI.
+- Photo attachments cannot be edited or deleted, and uploads rely on local disk
+  rather than object storage.
 - Account provisioning is deliberately minimal: no editing, deactivation,
   password reset, search or pagination yet.
 - There is no automated test suite and no CI.
@@ -243,7 +265,7 @@ Near-term work, roughly in order:
 
 1. Show the complaint history trail to staff and expose a citizen-friendly
    progress view.
-2. Comments, photo attachments and notifications.
+2. Comments, notifications and photo management (delete/replace).
 3. Area-level reporting and workload summaries.
 4. Tests, CI, and a deployment path.
 

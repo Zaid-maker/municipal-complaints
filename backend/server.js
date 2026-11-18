@@ -12,6 +12,7 @@ import complaintRoutes from "./src/routes/complaintRoutes.js";
 
 import { corsOptions } from "./src/config/cors.js";
 import connectDB from "./src/config/db.js";
+import { UPLOAD_ROOT } from "./src/config/uploads.js";
 
 dotenv.config();
 
@@ -42,6 +43,20 @@ const apiLimiter = rateLimit({
 
 // Registered before the routers so every /api request is throttled.
 app.use("/api", apiLimiter);
+
+// Complaint photos are public to signed-in citizens as well as staff, so they
+// are served as plain static files rather than through the API.
+app.use(
+    "/uploads",
+    express.static(UPLOAD_ROOT, {
+        index: false,
+        maxAge: "7d",
+        dotfiles: "deny",
+        setHeaders: (res) => {
+            res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+        }
+    })
+);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);

@@ -8,6 +8,9 @@ node_modules/
 .env.*
 !.env.example
 
+# Uploaded complaint photos (kept on the server, not in git)
+backend/uploads/
+
 # Build output
 dist/
 dist-ssr/

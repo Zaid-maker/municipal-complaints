@@ -49,6 +49,36 @@ const locationSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const attachmentSchema = new mongoose.Schema({
+    filename: {
+        type: String,
+        required: true
+    },
+    originalName: {
+        type: String,
+        trim: true,
+        maxlength: 200
+    },
+    mimeType: {
+        type: String,
+        required: true
+    },
+    size: {
+        type: Number,
+        required: true,
+        min: 1
+    },
+    uploadedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+    uploadedAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
 const complaintSchema = new mongoose.Schema(
     {
         reference: {
@@ -134,6 +164,13 @@ const complaintSchema = new mongoose.Schema(
 
         history: {
             type: [historyEntrySchema],
+            default: []
+        },
+
+        // Photos added by the assigned officer (or an administrator) to
+        // document the work, shown to staff and citizens alike.
+        attachments: {
+            type: [attachmentSchema],
             default: []
         }
     },

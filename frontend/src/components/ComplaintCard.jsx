@@ -1,3 +1,4 @@
+import AttachmentGrid from "./AttachmentGrid";
 import { StatusBadge } from "./ui";
 import { timeAgo } from "../lib/format";
 
@@ -64,6 +65,8 @@ export default function ComplaintCard({ complaint, actions }) {
           </a>
         )}
       </div>
+
+      <AttachmentGrid attachments={complaint.attachments} />
 
       {actions && (
         <div className="mt-4 border-t border-slate-100 pt-4">{actions}</div>

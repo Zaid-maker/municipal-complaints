@@ -1,3 +1,5 @@
+import fs from "node:fs/promises";
+
 import Complaint from "../models/Complaint.js";
 import Counter from "../models/Counter.js";
 import User from "../models/User.js";
@@ -44,6 +46,14 @@ const baseComplaint = (complaint) => ({
     priorityLabel: priorityLabel(complaint.priority),
     status: complaint.status,
     statusLabel: statusLabel(complaint.status),
+    attachments: (complaint.attachments ?? []).map((attachment) => ({
+        id: attachment._id.toString(),
+        url: `/uploads/complaints/${attachment.filename}`,
+        name: attachment.originalName || attachment.filename,
+        mimeType: attachment.mimeType,
+        size: attachment.size,
+        uploadedAt: attachment.uploadedAt
+    })),
     createdAt: complaint.createdAt,
     updatedAt: complaint.updatedAt
 });
@@ -344,6 +354,57 @@ export const updateComplaint = async (req, res, next) => {
             }
         });
     } catch (error) {
+        next(error);
+    }
+};
+
+export const addComplaintAttachments = async (req, res, next) => {
+    const files = req.files ?? [];
+
+    try {
+        if (files.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Attach at least one photo"
+            });
+        }
+
+        const complaint = req.complaint;
+        const label = `${files.length} photo${files.length === 1 ? "" : "s"}`;
+
+        complaint.attachments.push(
+            ...files.map((file) => ({
+                filename: file.filename,
+                originalName: file.originalname,
+                mimeType: file.mimetype,
+                size: file.size,
+                uploadedBy: req.user._id
+            }))
+        );
+
+        complaint.history.push({
+            status: complaint.status,
+            note: `Added ${label}`,
+            changedBy: req.user._id
+        });
+
+        await complaint.save();
+        await complaint.populate("citizen", "name email");
+        await complaint.populate("assignedTo", "name email");
+
+        return res.status(201).json({
+            success: true,
+            message: `Added ${label}`,
+            data: {
+                complaint: serializeComplaint(complaint, req.user)
+            }
+        });
+    } catch (error) {
+        // Do not leave orphaned files behind when the database write fails.
+        await Promise.all(
+            files.map((file) => fs.rm(file.path, { force: true }).catch(() => {}))
+        );
+
         next(error);
     }
 };
