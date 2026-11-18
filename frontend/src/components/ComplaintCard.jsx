@@ -1,8 +1,8 @@
-import AttachmentGrid from "./AttachmentGrid";
+import ComplaintAttachments from "./ComplaintAttachments";
 import { StatusBadge } from "./ui";
 import { timeAgo } from "../lib/format";
 
-export default function ComplaintCard({ complaint, actions }) {
+export default function ComplaintCard({ complaint, actions, onUpdated }) {
   const reporterLabel =
     complaint.reporter?.name ?? complaint.reporter?.displayName ?? "Citizen";
 
@@ -66,7 +66,7 @@ export default function ComplaintCard({ complaint, actions }) {
         )}
       </div>
 
-      <AttachmentGrid attachments={complaint.attachments} />
+      <ComplaintAttachments complaint={complaint} onUpdated={onUpdated} />
 
       {actions && (
         <div className="mt-4 border-t border-slate-100 pt-4">{actions}</div>

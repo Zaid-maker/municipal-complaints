@@ -22,7 +22,7 @@ export const requireAttachmentAccess = async (req, res, next) => {
             return res.status(403).json({
                 success: false,
                 message:
-                    "Only the assigned officer or an administrator can add photos"
+                    "Only the assigned officer or an administrator can change photos"
             });
         }
 

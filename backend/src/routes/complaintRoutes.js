@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
     addComplaintAttachments,
     createComplaint,
+    deleteComplaintAttachment,
     getComplaint,
     getComplaintMeta,
     listComplaints,
@@ -28,6 +29,12 @@ router.post(
     requireAttachmentAccess,
     uploadComplaintPhotos,
     addComplaintAttachments
+);
+router.delete(
+    "/:reference/attachments/:attachmentId",
+    authorize("officer", "admin"),
+    requireAttachmentAccess,
+    deleteComplaintAttachment
 );
 
 export default router;

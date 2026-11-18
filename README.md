@@ -184,6 +184,7 @@ All responses follow the shape `{ success, message?, data?, errors? }`.
 | `GET` | `/api/complaints/:reference` | Authenticated | One complaint by reference |
 | `PATCH` | `/api/complaints/:reference` | Officer/admin | Assign, change status, add a note |
 | `POST` | `/api/complaints/:reference/attachments` | Assigned officer/admin | Upload 1–5 photos (`multipart/form-data`, field `photos`) |
+| `DELETE` | `/api/complaints/:reference/attachments/:attachmentId` | Assigned officer/admin | Remove one photo and its file |
 | `GET` | `/uploads/complaints/:filename` | Public | Stored complaint photo |
 
 Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
@@ -241,7 +242,8 @@ Rate limits: authentication routes allow 10 requests per 15 minutes; the rest of
   `/uploads/complaints/<file>`. The folder is git-ignored and created on start.
 - Each upload is recorded in the complaint history as `Added N photo(s)`, and
   photo bytes are deleted again if the database write fails.
-- There is no delete endpoint yet; a photo stays with the complaint.
+- The assigned officer or an administrator can remove a photo. The subdocument
+  and file are deleted, and `Removed 1 photo` is appended to the history.
 
 ---
 
@@ -251,8 +253,8 @@ The project is alpha, so this list is expected to shrink quickly.
 
 - There are no comments or notifications yet, and the history trail is only
   visible in the API, not in the UI.
-- Photo attachments cannot be edited or deleted, and uploads rely on local disk
-  rather than object storage.
+- Photo attachments cannot be edited or replaced, and uploads rely on local
+  disk rather than object storage.
 - Account provisioning is deliberately minimal: no editing, deactivation,
   password reset, search or pagination yet.
 - There is no automated test suite and no CI.
@@ -265,7 +267,7 @@ Near-term work, roughly in order:
 
 1. Show the complaint history trail to staff and expose a citizen-friendly
    progress view.
-2. Comments, notifications and photo management (delete/replace).
+2. Comments, notifications and photo captions/replacements.
 3. Area-level reporting and workload summaries.
 4. Tests, CI, and a deployment path.
 

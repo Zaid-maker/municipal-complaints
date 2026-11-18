@@ -290,6 +290,7 @@ export default function StaffComplaintsPage({ scope = "all" }) {
           <ComplaintCard
             key={complaint.id}
             complaint={complaint}
+            onUpdated={handleUpdated}
             actions={
               <StaffComplaintControls
                 complaint={complaint}

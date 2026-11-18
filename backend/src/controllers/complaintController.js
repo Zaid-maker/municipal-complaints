@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import path from "node:path";
 
 import Complaint from "../models/Complaint.js";
 import Counter from "../models/Counter.js";
@@ -11,6 +12,7 @@ import {
     priorityLabel,
     statusLabel
 } from "../config/complaint.js";
+import { COMPLAINT_UPLOAD_DIR } from "../config/uploads.js";
 import {
     createComplaintSchema,
     listComplaintsQuerySchema,
@@ -405,6 +407,50 @@ export const addComplaintAttachments = async (req, res, next) => {
             files.map((file) => fs.rm(file.path, { force: true }).catch(() => {}))
         );
 
+        next(error);
+    }
+};
+
+export const deleteComplaintAttachment = async (req, res, next) => {
+    try {
+        const complaint = req.complaint;
+        const attachment = complaint.attachments.id(req.params.attachmentId);
+
+        if (!attachment) {
+            return res.status(404).json({
+                success: false,
+                message: "Photo not found"
+            });
+        }
+
+        const { filename } = attachment;
+
+        attachment.deleteOne();
+        complaint.history.push({
+            status: complaint.status,
+            note: "Removed 1 photo",
+            changedBy: req.user._id
+        });
+
+        await complaint.save();
+
+        // The database no longer references the file. A failed unlink only
+        // leaves an orphan on disk, never a broken image in the record.
+        await fs
+            .rm(path.join(COMPLAINT_UPLOAD_DIR, filename), { force: true })
+            .catch(() => {});
+
+        await complaint.populate("citizen", "name email");
+        await complaint.populate("assignedTo", "name email");
+
+        return res.status(200).json({
+            success: true,
+            message: "Photo removed",
+            data: {
+                complaint: serializeComplaint(complaint, req.user)
+            }
+        });
+    } catch (error) {
         next(error);
     }
 };
