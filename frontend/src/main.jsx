@@ -11,3 +11,11 @@ createRoot(document.getElementById('root')).render(
     </AuthProvider>
   </StrictMode>,
 )
+
+// The shell is cacheable; API responses and photos are never cached by the
+// service worker. Registration is production-only so dev HMR stays untouched.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}

@@ -1,5 +1,6 @@
+import "dotenv/config";
+
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import mongoose from "mongoose";
@@ -14,8 +15,6 @@ import { corsOptions } from "./src/config/cors.js";
 import connectDB from "./src/config/db.js";
 import { UPLOAD_ROOT } from "./src/config/uploads.js";
 
-dotenv.config();
-
 const DATABASE_STATES = {
     0: "disconnected",
     1: "connected",
@@ -26,6 +25,14 @@ const DATABASE_STATES = {
 const app = express();
 
 app.disable("x-powered-by");
+
+// Behind a reverse proxy (Render, Railway, Nginx) the forwarded client IP is
+// needed for rate limiting to work correctly.
+if (process.env.TRUST_PROXY) {
+    const hops = Number(process.env.TRUST_PROXY);
+
+    app.set("trust proxy", Number.isInteger(hops) && hops > 0 ? hops : 1);
+}
 
 app.use(helmet());
 

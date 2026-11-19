@@ -1,1 +1,19 @@
-@import 'tailwindcss'
+@import 'tailwindcss';
+
+html {
+  background-color: #f8fafc;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+/* Installed PWA on iOS: keep content clear of the notch and home indicator. */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}

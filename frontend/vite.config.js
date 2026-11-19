@@ -3,6 +3,13 @@ import babel from '@rolldown/plugin-babel'
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 
+const backend = 'http://localhost:5000'
+
+const proxy = {
+  '/api': backend,
+  '/uploads': backend
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -11,9 +18,9 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] })
   ],
   server: {
-    proxy: {
-      '/api': 'http://localhost:5000',
-      '/uploads': 'http://localhost:5000'
-    }
+    proxy
+  },
+  preview: {
+    proxy
   }
 })

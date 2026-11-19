@@ -4,7 +4,11 @@ import { fileURLToPath } from "node:url";
 
 const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
 
-export const UPLOAD_ROOT = path.resolve(moduleDirectory, "../../uploads");
+const configuredRoot = process.env.UPLOAD_ROOT?.trim();
+
+export const UPLOAD_ROOT = configuredRoot
+    ? path.resolve(configuredRoot)
+    : path.resolve(moduleDirectory, "../../uploads");
 export const COMPLAINT_UPLOAD_DIR = path.join(UPLOAD_ROOT, "complaints");
 
 // Keep the folders in place even on a fresh checkout.

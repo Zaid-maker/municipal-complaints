@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:citizen": "vite --mode citizen",
     "build": "vite build",
+    "build:citizen": "vite build --mode citizen",
     "lint": "oxlint",
     "preview": "vite preview"
   },
