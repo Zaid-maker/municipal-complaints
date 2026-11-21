@@ -1,0 +1,122 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+#
+# Render Blueprint for the Municipal Complaint Management System.
+#
+# One sync creates both halves:
+#   municipal-api  - Express API, MongoDB connection, persistent photo disk
+#   municipal-web  - React/Vite PWA on Render's global CDN (free)
+#
+# MongoDB is NOT provisioned here. Render has no managed MongoDB, so the API
+# connects to MongoDB Atlas. Create the cluster first, then paste its
+# connection string when Render asks for MONGODB_URI.
+#
+# There is one required post-deploy step: set the API's CLIENT_URL to the
+# static site's URL. A Blueprint cannot read a static site's generated
+# onrender.com URL. See "Deploy to Render" in README.md.
+
+services:
+  # ---------------------------------------------------------------------------
+  # API, MongoDB connection and photo storage
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: municipal-api
+    runtime: node
+    # A persistent disk requires a paid instance. For a free pilot, change
+    # this to `free` and remove the disk block below; uploaded photos will
+    # then be lost on every deploy and idle spin-down.
+    plan: starter
+    region: singapore
+    rootDir: backend
+    buildCommand: bun install --frozen-lockfile
+    startCommand: bun server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BUN_VERSION
+        value: 1.4.4
+      # Render terminates HTTPS and forwards the client IP. One hop.
+      - key: TRUST_PROXY
+        value: "1"
+      # Generated once by Render and kept stable across syncs.
+      - key: JWT_SECRET
+        generateValue: true
+      # No refresh tokens yet, so mobile sessions need to last longer than the
+      # local 1-day default. Shorten this if 30 days is too generous.
+      - key: JWT_EXPIRES_IN
+        value: 30d
+      # Used once to create the first administrator. Read it from the Render
+      # dashboard, then the endpoint disables itself.
+      - key: ADMIN_BOOTSTRAP_KEY
+        generateValue: true
+      # Prompted by Render during Blueprint setup. Atlas connection string,
+      # including the database name, e.g.
+      # mongodb+srv://user:pass@cluster.mongodb.net/municipal_complaints
+      - key: MONGODB_URI
+        sync: false
+      # Writes photos under the mounted disk instead of the ephemeral
+      # container filesystem.
+      - key: UPLOAD_ROOT
+        value: /var/data/uploads
+      # CLIENT_URL is intentionally omitted. After the static site gets its
+      # URL, add it in the Render dashboard (municipal-api -> Environment):
+      #   CLIENT_URL=https://municipal-web-xxxx.onrender.com
+      # Comma-separated if you also add a custom domain or a second frontend.
+    disk:
+      name: municipal-uploads
+      mountPath: /var/data
+      sizeGB: 1
+
+  # ---------------------------------------------------------------------------
+  # React frontend and PWA (static site, free)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: municipal-web
+    runtime: static
+    rootDir: frontend
+    # Full build so citizens and staff share one URL. For a separate
+    # citizen-only app later, use `bun run build:citizen` instead and add the
+    # new site's URL to CLIENT_URL as well.
+    buildCommand: bun install --frozen-lockfile && bun run build
+    staticPublishPath: dist
+    envVars:
+      - key: BUN_VERSION
+        value: 1.4.4
+      # Vite bakes this into the bundle at build time. Render resolves the
+      # API's public URL (including its generated suffix) before this build.
+      - key: VITE_API_URL
+        fromService:
+          name: municipal-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+    headers:
+      # Hashed build assets never change; cache them for a year.
+      - path: /assets/*
+        name: Cache-Control
+        value: "public, max-age=31536000, immutable"
+      # The service worker must be revalidated or installed apps keep an old
+      # shell forever.
+      - path: /sw.js
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+      - path: /index.html
+        name: Cache-Control
+        value: "no-cache"
+      - path: /
+        name: Cache-Control
+        value: "no-cache"
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+    # No SPA rewrite is needed yet: the app has no client-side routes. If you
+    # add them later, add:
+    #   routes:
+    #     - type: rewrite
+    #       source: /*
+    #       destination: /index.html

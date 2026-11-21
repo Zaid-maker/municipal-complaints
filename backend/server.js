@@ -41,6 +41,24 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// Health check
+//
+// Registered before the API limiter: Render probes this path every few
+// seconds, which would otherwise exhaust the shared /api budget and make a
+// healthy instance look down.
+app.get("/api/health", (req, res) => {
+    const database = DATABASE_STATES[mongoose.connection.readyState] || "unknown";
+    const healthy = mongoose.connection.readyState === 1;
+
+    res.status(healthy ? 200 : 503).json({
+        success: healthy,
+        message: healthy
+            ? "Municipal Complaint Management API is running"
+            : "Municipal Complaint Management API is running, but the database is unavailable",
+        database
+    });
+});
+
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 100,
@@ -48,7 +66,8 @@ const apiLimiter = rateLimit({
     legacyHeaders: false
 });
 
-// Registered before the routers so every /api request is throttled.
+// Every /api route registered after this point is throttled. Health is
+// registered above so Render's frequent probes do not consume the budget.
 app.use("/api", apiLimiter);
 
 // Complaint photos are public to signed-in citizens as well as staff, so they
@@ -72,20 +91,6 @@ app.use("/api/complaints", complaintRoutes);
 if (process.env.NODE_ENV === "development") {
     app.use(morgan("dev"));
 }
-
-// Health check
-app.get("/api/health", (req, res) => {
-    const database = DATABASE_STATES[mongoose.connection.readyState] || "unknown";
-    const healthy = mongoose.connection.readyState === 1;
-
-    res.status(healthy ? 200 : 503).json({
-        success: healthy,
-        message: healthy
-            ? "Municipal Complaint Management API is running"
-            : "Municipal Complaint Management API is running, but the database is unavailable",
-        database
-    });
-});
 
 // Not found handler
 app.use((req, res) => {
