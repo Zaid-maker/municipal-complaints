@@ -95,7 +95,7 @@ See [Known issues](#known-issues) for the current limitations.
 └── frontend/
     ├── index.html               # PWA metadata, theme color, app shell
     ├── capacitor.config.json    # Capacitor app id, webDir, splash settings
-    ├── .env.android             # Public API URL and citizen-only flag for the APK
+    ├── .env.android.example     # Template for the APK's API URL (copy to .env.android)
     ├── assets/                  # Source icon and splash PNGs for capacitor-assets
     ├── android/                 # Capacitor Android project (committed)
     ├── public/
@@ -325,10 +325,9 @@ Complaint submission has four layers, all configurable in `backend/.env`:
 
 ## Deployment
 
-The app is live on Render's free static CDN with a paid Starter API instance:
-
-- Web / PWA: <https://municipal-web.onrender.com>
-- API: <https://your-api.onrender.com> (`/api/health`)
+The app runs on Render: the PWA on the free static CDN and the API on a Starter
+instance with a persistent disk. Both service URLs are shown in the Render
+dashboard.
 
 `render.yaml` provisions both services together. The generic settings below
 apply to any other host.
@@ -450,8 +449,10 @@ bun run native:run    # build and install on a device or emulator
 ```
 
 - `bun run build:android` writes `dist-citizen/` using Vite's `android` mode.
-  That mode sets `VITE_CITIZEN_ONLY=true` and reads `VITE_API_URL` from
-  `frontend/.env.android`. Update that value if the API host changes.
+  That mode sets `VITE_CITIZEN_ONLY=true` and reads `VITE_API_URL`. Copy
+  `frontend/.env.android.example` to `frontend/.env.android` and set the API
+  origin before the first build; the real file is git-ignored and the build
+  stops with a clear error if it is missing.
 - The native shell skips service worker registration (the bundle is already
   local) and hides the splash screen after React's first paint.
 - Icons and splash images come from `frontend/assets/` via

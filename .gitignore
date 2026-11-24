@@ -7,8 +7,7 @@ node_modules/
 .env
 .env.*
 !.env.example
-# Public API URL baked into the Android bundle; contains no secrets.
-!.env.android
+!.env.*.example
 
 # Uploaded complaint photos (kept on the server, not in git)
 backend/uploads/
