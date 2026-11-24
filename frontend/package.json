@@ -8,10 +8,18 @@
     "dev:citizen": "vite --mode citizen",
     "build": "vite build",
     "build:citizen": "vite build --mode citizen",
+    "build:android": "vite build --mode android --outDir dist-citizen",
+    "native:sync": "bun run build:android && cap sync android",
+    "native:open": "cap open android",
+    "native:run": "cap run android",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4",
     "@tailwindcss/vite": "^4.3.4",
     "leaflet": "^1.9.4",
     "react": "^19.3.1",
@@ -20,6 +28,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.2",
     "@rolldown/plugin-babel": "^0.3.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

@@ -15,7 +15,7 @@ async function sendRequest(path, { method, headers, body }) {
   try {
     response = await fetch(`${API_BASE_URL}${path}`, { method, headers, body });
   } catch {
-    throw new ApiError("Cannot reach the server. Is the backend running?");
+    throw new ApiError("Cannot reach the server. Check your connection and try again.");
   }
 
   const payload = await response.json().catch(() => ({}));

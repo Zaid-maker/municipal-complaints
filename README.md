@@ -40,7 +40,7 @@ planned once the API is deployed over HTTPS.
 | Complaint anti-spam (rate limit, daily cap, duplicate check, honeypot) | Implemented |
 | Installable PWA (manifest, service worker, icons) | Implemented |
 | Citizen-only build (`dev:citizen` / `build:citizen`) | Implemented |
-| Native Android/iOS app (Capacitor) | **Not started** |
+| Native Android app (Capacitor) | Scaffolded; no APK build yet |
 | Deployment to a public HTTPS API | Implemented on Render (early alpha) |
 | Comments and notifications | **Not started** |
 | Automated tests | **None** |
@@ -94,6 +94,10 @@ See [Known issues](#known-issues) for the current limitations.
 │       └── validators/           # Zod schemas
 └── frontend/
     ├── index.html               # PWA metadata, theme color, app shell
+    ├── capacitor.config.json    # Capacitor app id, webDir, splash settings
+    ├── .env.android             # Public API URL and citizen-only flag for the APK
+    ├── assets/                  # Source icon and splash PNGs for capacitor-assets
+    ├── android/                 # Capacitor Android project (committed)
     ├── public/
     │   ├── manifest.webmanifest # PWA identity, icons, display mode
     │   ├── sw.js                # Shell-only service worker
@@ -103,6 +107,7 @@ See [Known issues](#known-issues) for the current limitations.
     └── src/
         ├── lib/api.js            # Fetch wrapper and ApiError
         ├── lib/format.js         # Date and relative-time helpers
+        ├── lib/native.js         # Splash, status bar, native detection
         ├── context/              # AuthProvider, AuthContext, useAuth
         ├── components/ui.jsx     # Card, Button, fields, alerts, badges
         ├── components/ComplaintCard.jsx
@@ -355,7 +360,8 @@ is enough for a pilot).
    **Environment**, add `CLIENT_URL` with that exact origin, and save. A
    Blueprint cannot read a static site's generated `onrender.com` URL, so this
    one value has to be pasted by hand. Comma-separate it if you add a custom
-   domain or a second frontend.
+   domain, a second frontend or the Android/Capacitor app
+   (`...,https://localhost,capacitor://localhost`).
 5. **Create the first administrator.** Open the web URL, choose **Create the
    first administrator**, and use `ADMIN_BOOTSTRAP_KEY` from
    `municipal-api` → **Environment**. Then create staff accounts and register
@@ -430,17 +436,51 @@ The PWA needs HTTPS for installability, service worker registration and
 geolocation. The manifest and service worker are plain files in `public/`, so no
 extra build step or plugin is involved.
 
-### Before wrapping with Capacitor
+### Android app (Capacitor)
 
-- The API must be reachable at a public HTTPS address; a phone cannot use
-  `localhost`.
-- Add `capacitor://localhost` and `https://localhost` to `CLIENT_URL` (or the
-  custom scheme you configure).
-- Photos need persistent storage, not a container's temp directory.
-- Sessions currently last `JWT_EXPIRES_IN` (1 day by default). Mobile users will
-  expect longer sessions or refresh tokens.
-- Every change to bundled assets requires an app-store release, so ship the PWA
-  first and wrap only once the API is stable.
+The citizen app is scaffolded under `frontend/android` as a Capacitor 8 project
+(`pk.gov.municipal.complaints`). It wraps the citizen-only build, so officer and
+admin screens never ship in the APK.
+
+```powershell
+cd frontend
+bun run native:sync   # build:android, then cap sync android
+bun run native:open   # open the project in Android Studio
+bun run native:run    # build and install on a device or emulator
+```
+
+- `bun run build:android` writes `dist-citizen/` using Vite's `android` mode.
+  That mode sets `VITE_CITIZEN_ONLY=true` and reads `VITE_API_URL` from
+  `frontend/.env.android`. Update that value if the API host changes.
+- The native shell skips service worker registration (the bundle is already
+  local) and hides the splash screen after React's first paint.
+- Icons and splash images come from `frontend/assets/` via
+  `bunx capacitor-assets generate --android`. Replace those PNGs to rebrand.
+- Location uses the WebView's `navigator.geolocation`. Capacitor requests the
+  runtime permission, and the manifest declares coarse and fine location;
+  denial falls back to tapping the map.
+- The generated `android/` project is committed, but copied web assets under
+  `android/app/src/main/assets/public/` are ignored and recreated by sync.
+
+Building an APK needs JDK 21 and Android SDK 36 (Android Studio). The project
+uses minSdk 24, targetSdk 36.
+
+Before the app can call the API, append the Capacitor origins to the API's
+`CLIENT_URL` on Render:
+
+```
+https://municipal-web.onrender.com,https://localhost,capacitor://localhost
+```
+
+`https://localhost` is the Android origin because `androidScheme` is `https`.
+`capacitor://localhost` covers iOS if that platform is added later. Saving the
+variable needs a redeploy; health checks pass without it but every API call
+from the app will fail CORS.
+
+Not done yet: a signed release build, app-store listing, camera use (citizens do
+not upload photos; officer photo tools stay on the web), push notifications, and
+back-button exit confirmation. The Android app uses the API's 30-day JWT, so
+refresh tokens can wait until the first public release.
 
 ---
 
@@ -457,8 +497,8 @@ The project is alpha, so this list is expected to shrink quickly.
 - The PWA has no “new version available” prompt; a reload picks up a new shell,
   and old caches are cleared when the new worker activates.
 - The citizen-only build gates staff screens at runtime rather than removing
-  them from the bundle, and there is no native app, push notification or offline
-  complaint queue yet.
+  them from the bundle. The Android shell is scaffolded but not yet built or
+  signed, and there is no push notification or offline complaint queue.
 - iOS has no install prompt; citizens must use **Share → Add to Home Screen**.
 - The live deployment uses Render's Starter API with a 1 GB disk and Atlas M0.
   There are no database backups, uptime alerts or off-site copies of photos yet,
@@ -475,8 +515,8 @@ Near-term work, roughly in order:
 
 1. Harden the live deployment: Atlas backups, uptime alerts, disk monitoring and
    an off-site copy of uploaded photos.
-2. Publish the citizen PWA, then wrap the same build with Capacitor for Android;
-   iOS follows when a Mac/Xcode is available.
+2. Finish the Android wrapper: signed release build, device testing and a store
+   listing; iOS follows when a Mac/Xcode is available.
 3. Show the complaint history trail to staff and expose a citizen-friendly
    progress view.
 4. Comments, notifications and photo captions/replacements.

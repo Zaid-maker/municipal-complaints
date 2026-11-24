@@ -6,7 +6,9 @@ import AdminApp from "./pages/AdminApp";
 import OfficerApp from "./pages/OfficerApp";
 
 // `bun run build:citizen` / `bun run dev:citizen` use Vite's citizen mode.
-const CITIZEN_ONLY = import.meta.env.MODE === "citizen";
+// The Android wrapper runs mode `android`, which sets VITE_CITIZEN_ONLY.
+const CITIZEN_ONLY =
+  import.meta.env.MODE === "citizen" || import.meta.env.VITE_CITIZEN_ONLY === "true";
 
 export default function App() {
   const { status, user, signOut } = useAuth();

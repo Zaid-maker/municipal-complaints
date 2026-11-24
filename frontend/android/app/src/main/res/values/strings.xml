@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Municipal Complaints</string>
+    <string name="title_activity_main">Municipal Complaints</string>
+    <string name="package_name">pk.gov.municipal.complaints</string>
+    <string name="custom_url_scheme">pk.gov.municipal.complaints</string>
+</resources>
