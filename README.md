@@ -41,7 +41,7 @@ planned once the API is deployed over HTTPS.
 | Installable PWA (manifest, service worker, icons) | Implemented |
 | Citizen-only build (`dev:citizen` / `build:citizen`) | Implemented |
 | Native Android/iOS app (Capacitor) | **Not started** |
-| Deployment to a public HTTPS API | **Blueprint included, not deployed** |
+| Deployment to a public HTTPS API | Implemented on Render (early alpha) |
 | Comments and notifications | **Not started** |
 | Automated tests | **None** |
 
@@ -320,8 +320,13 @@ Complaint submission has four layers, all configurable in `backend/.env`:
 
 ## Deployment
 
-No deployment is live yet. `render.yaml` provisions the API and the web app
-together on Render; the generic settings below apply to any other host.
+The app is live on Render's free static CDN with a paid Starter API instance:
+
+- Web / PWA: <https://municipal-web.onrender.com>
+- API: <https://your-api.onrender.com> (`/api/health`)
+
+`render.yaml` provisions both services together. The generic settings below
+apply to any other host.
 
 ### Deploy to Render (one Blueprint)
 
@@ -455,9 +460,9 @@ The project is alpha, so this list is expected to shrink quickly.
   them from the bundle, and there is no native app, push notification or offline
   complaint queue yet.
 - iOS has no install prompt; citizens must use **Share → Add to Home Screen**.
-- No deployment is live yet. `render.yaml` is ready, but the API only accepts
-  browser requests from origins listed in `CLIENT_URL`, so the static site's URL
-  has to be set in the Render dashboard after the first deploy.
+- The live deployment uses Render's Starter API with a 1 GB disk and Atlas M0.
+  There are no database backups, uptime alerts or off-site copies of photos yet,
+  and `CLIENT_URL` must be updated by hand if the frontend URL changes.
 - Account provisioning is deliberately minimal: no editing, deactivation,
   password reset, search or pagination yet.
 - There is no automated test suite and no CI.
@@ -468,8 +473,8 @@ The project is alpha, so this list is expected to shrink quickly.
 
 Near-term work, roughly in order:
 
-1. Deploy the API and staff console over HTTPS with persistent photo storage
-   (the included `render.yaml` Blueprint does both in one sync).
+1. Harden the live deployment: Atlas backups, uptime alerts, disk monitoring and
+   an off-site copy of uploaded photos.
 2. Publish the citizen PWA, then wrap the same build with Capacitor for Android;
    iOS follows when a Mac/Xcode is available.
 3. Show the complaint history trail to staff and expose a citizen-friendly
