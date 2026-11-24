@@ -54,14 +54,21 @@ services:
       # mongodb+srv://user:pass@cluster.mongodb.net/municipal_complaints
       - key: MONGODB_URI
         sync: false
+      # The static site's public URL. Set this in the Render dashboard after
+      # the first deploy (municipal-api -> Environment -> CLIENT_URL):
+      #   https://municipal-web-xxxx.onrender.com
+      # Without it every browser request from the frontend fails CORS with
+      # "No 'Access-Control-Allow-Origin' header is present". Comma-separate
+      # multiple origins if you add a custom domain or a second frontend.
+      - key: CLIENT_URL
+        sync: false
       # Writes photos under the mounted disk instead of the ephemeral
       # container filesystem.
       - key: UPLOAD_ROOT
         value: /var/data/uploads
-      # CLIENT_URL is intentionally omitted. After the static site gets its
-      # URL, add it in the Render dashboard (municipal-api -> Environment):
-      #   CLIENT_URL=https://municipal-web-xxxx.onrender.com
-      # Comma-separated if you also add a custom domain or a second frontend.
+      # CLIENT_URL is declared above with sync: false. Render only prompts for
+      # it during the initial Blueprint creation, so on this deployment add it
+      # by hand: municipal-api -> Environment -> CLIENT_URL.
     disk:
       name: municipal-uploads
       mountPath: /var/data

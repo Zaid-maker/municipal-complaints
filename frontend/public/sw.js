@@ -1,4 +1,4 @@
-const CACHE = "municipal-shell-v1";
+const CACHE = "municipal-shell-v2";
 
 const SHELL = [
   "/",
@@ -59,9 +59,15 @@ self.addEventListener("fetch", (event) => {
       const network = fetch(request)
         .then((response) => {
           if (response.ok) {
+            // Clone synchronously. The browser starts consuming the response
+            // as soon as respondWith settles, so cloning later inside the
+            // caches.open() chain throws "Response body is already used".
+            const copy = response.clone();
+
             caches
               .open(CACHE)
-              .then((cache) => cache.put(request, response.clone()));
+              .then((cache) => cache.put(request, copy))
+              .catch(() => {});
           }
 
           return response;
